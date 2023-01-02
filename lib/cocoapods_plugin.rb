@@ -7,4 +7,4 @@ require 'cocoapods-framework/muti_frameworker'
 
 
 #这个放在最后一个
-require 'cocoapods-framework/command'
+require 'cocoapods-framework/command/framework'
