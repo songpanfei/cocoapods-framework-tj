@@ -74,10 +74,16 @@ module Pod
       )
 
       installer = Installer.new(sandbox, podfile)
+
+        Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
+
       installer.repo_update = true
       installer.install!
 
-      unless installer.nil? 
+
+
+
+        unless installer.nil?
         installer.pods_project.targets.each do |target|
           target.build_configurations.each do |configuration| 
             if enable_bitcode && configuration.name == "Release"
