@@ -137,7 +137,7 @@ module Pod
 
     def podfile_from_spec path, spec, subspecs, sources, use_frameworks = true, use_modular_headers=true
       options = Hash.new
-      options[:podspec] = path.to_s
+      options[:path] = path.to_s
       options[:subspecs] = spec.subspecs.map do |sub|
         sub.base_name
       end
