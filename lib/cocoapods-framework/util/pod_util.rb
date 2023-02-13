@@ -78,8 +78,8 @@ module Pod
         Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
 
       installer.repo_update = true
+      installer.update = true
       installer.install!
-
 
 
 
