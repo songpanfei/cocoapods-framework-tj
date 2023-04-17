@@ -129,7 +129,7 @@ module Pod
     def build_all_device defines
       # build general first because simulator will exchange SDKROOT to simulat sdk
       build_general_device defines
-      # build_simulator_device defines
+      build_simulator_device defines
     end
 
     def build_general_device defines
