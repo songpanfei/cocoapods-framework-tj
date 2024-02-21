@@ -115,9 +115,9 @@ module Pod
     def create_xc_framework_by_frameworks frameworks, spec_name
       command = 'xcodebuild -create-xcframework '
       frameworks.each do |framework|
-        command << "-framework #{framework} "
+        command << "-framework /private#{framework} "
       end
-      command << "-output #{@sandbox_root}/#{spec_name}.xcframework 2>&1"
+      command << "-output /private#{@sandbox_root}/#{spec_name}.xcframework 2>&1"
       output = `#{command}`.lines.to_a
       if $?.exitstatus != 0
         Pod::ErrorUtil.error_report command,output
