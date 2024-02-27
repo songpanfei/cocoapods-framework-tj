@@ -36,6 +36,10 @@ module Pod
 
       collect_xc_frameworks
 
+      if @configuration == 'Release'
+        collect_dsyms
+      end
+      
       collect_bundles
     end
 
@@ -45,6 +49,79 @@ module Pod
       else
        collect_single_xcframeworks
       end
+    end
+
+    #收集符号表
+    def collect_dsyms
+      targets_parent = "#{@sandbox_root}/#{@spec.version}"
+      UI.puts "targets_parent at :#{targets_parent}"
+      #真机dsym目标目录
+      target_os_dir = "#{@sandbox_root}/#{@spec.version}/arm"
+      UI.puts "target_os_dir at :#{target_os_dir}"
+      #模拟器dsym目标目录
+      target_simulator_dir = "#{@sandbox_root}/#{@spec.version}/simulator"
+      UI.puts "target_simulator_dir at :#{target_simulator_dir}"
+
+      if not File.exist? targets_parent
+        Pathname.new(targets_parent).mkdir
+      end
+
+      if not File.exist? target_simulator_dir
+        Pathname.new(target_simulator_dir).mkdir
+      end
+      
+      if not File.exist? target_os_dir
+        Pathname.new(target_os_dir).mkdir
+      end
+
+      if not File.exist? target_simulator_dir
+        Pathname.new(target_simulator_dir).mkdir
+      end
+
+      source_os_path = "#{@sandbox_root}/export/Release-iphoneos/#{@spec.name}.framework.dSYM"
+      source_simulator_path = "#{@sandbox_root}/export/Release-iphoneos/#{@spec.name}.framework.dSYM"
+
+      UI.puts "source_os_path at :#{source_os_path}"
+      UI.puts "source_simulator_path at :#{source_simulator_path}"
+
+      command = "cp -rp #{source_os_path} #{target_os_dir} 2>&1"
+
+      UI.puts "command at :#{command}"
+      
+      output = `#{command}`.lines.to_a
+      if $?.exitstatus != 0
+        Pod::ErrorUtil.error_report command,output
+        Process.exit -1
+      end
+
+      command = "cp -rp #{source_simulator_path} #{target_simulator_dir} 2>&1"
+      output = `#{command}`.lines.to_a
+      if $?.exitstatus != 0
+        Pod::ErrorUtil.error_report command,output
+        Process.exit -1
+      end
+      
+      dsym_parent_path = "#{@sandbox_root}"
+      dsym_zip_path = "#{@sandbox_root}/#{@spec.version}.zip"
+      
+      #在这里保存当前目录
+      cur_pwd = "#{Dir.pwd}"
+      #在这里cd进入到 dsym_parent_path
+      Dir.chdir(dsym_parent_path)
+      UI.puts "当前工作目录 :#{Dir.pwd}"
+      zip_command = "zip -r #{dsym_zip_path} #{@spec.version}"
+      UI.puts "zip_command at :#{zip_command}"
+      output = `#{zip_command}`.lines.to_a
+      if $?.exitstatus != 0
+        Pod::ErrorUtil.error_report zip_command,output
+        Process.exit -1
+      end
+
+       #在这里重新进入cd进入到 cur_pwd
+      Dir.chdir(cur_pwd)
+
+      UI.puts "当前工作目录 :#{Dir.pwd}"
+      @outputs[:dsym_zip] = dsym_zip_path 
     end
 
     def collect_muti_xcframworks
@@ -137,7 +214,8 @@ module Pod
       xcode_xbuild(
         defines,
         @configuration,
-        @sandbox_root
+        @sandbox_root,
+        false
       )
     end
 
@@ -147,7 +225,8 @@ module Pod
       xcode_xbuild(
         defines,
         @configuration,
-        @sandbox_root
+        @sandbox_root,
+        true
       )
     end
 
@@ -156,7 +235,11 @@ module Pod
         Pathname.new(target_dir).mkdir
       end
       outputs_xcframework target_dir
+      if @configuration == 'Release'
+        outputs_dsyms target_dir
+      end
       outputs_bundle target_dir
+
       new_spec_hash = generic_new_podspec_hash @spec
       new_spec_hash[:vendored_frameworks] = "#{@spec.name}.xcframework"
       new_spec_hash = fix_header_file new_spec_hash, "#{target_dir}/#{@spec.name}.xcframework"
@@ -194,6 +277,17 @@ module Pod
 
     def outputs_xcframework target_dir
       command = "cp -rp #{@outputs[:xcframework]} #{target_dir} 2>&1"
+      output = `#{command}`.lines.to_a
+      if $?.exitstatus != 0
+        Pod::ErrorUtil.error_report command,output
+        Process.exit -1
+      end
+    end
+
+    # dsym 符号表到输出目录
+    def outputs_dsyms target_dir
+      dsym_zip_path = @outputs[:dsym_zip]
+      command = "cp -rp #{dsym_zip_path} #{target_dir} 2>&1"
       output = `#{command}`.lines.to_a
       if $?.exitstatus != 0
         Pod::ErrorUtil.error_report command,output
