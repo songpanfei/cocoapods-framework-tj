@@ -21,6 +21,10 @@ module Pod
 
       target_dir, work_dir = create_working_directory_by_spec spec, @force
       build_framework spec, work_dir, target_dir
+      UI.puts("打包完成开始清理work_dir目录")
+      require 'fileutils'
+      FileUtils.rm_rf(work_dir)
+      UI.puts("work_dir目录已清理")
     end
 
     def build_framework spec, work_dir, target_dir
